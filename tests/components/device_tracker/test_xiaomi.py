@@ -1,4 +1,4 @@
-"""The tests for the Unifi WAP device tracker platform."""
+"""The tests for the Xiaomi router device tracker platform."""
 import logging
 import unittest
 from unittest import mock
@@ -21,7 +21,6 @@ URL_LIST_END = 'api/misystem/devicelist'
 
 def mocked_requests(*args, **kwargs):
     """Mock requests.get invocations."""
-
     class MockResponse:
         """Class to represent a mocked response."""
 
@@ -54,8 +53,8 @@ def mocked_requests(*args, **kwargs):
     elif str(args[0]).startswith(URL_AUTHORIZE):
         print("deliver authorized")
         return MockResponse({
-            "url": "/cgi-bin/luci/;stok=ef5860a64429494e81eebab16f01e807/web/home",
-            "token": "ef5860a64429494e81eebab16f01e807",
+            "url": "/cgi-bin/luci/;stok=ef5860/web/home",
+            "token": "ef5860",
             "code": "0"
         }, 200)
     elif str(args[0]).endswith(URL_LIST_END):
@@ -133,7 +132,9 @@ def mocked_requests(*args, **kwargs):
         _LOGGER.debug('UNKNOWN ROUTE')
 
 
-class TestUnifiScanner(unittest.TestCase):
+class TestXiaomiDeviceScanner(unittest.TestCase):
+    """Xiaomi device scanner test class."""
+
     def setUp(self):
         """Initialize values for this testcase class."""
         self.hass = get_test_home_assistant()
@@ -146,6 +147,7 @@ class TestUnifiScanner(unittest.TestCase):
         'homeassistant.components.device_tracker.xiaomi.XioamiDeviceScanner',
         return_value=mock.MagicMock())
     def test_config(self, xiaomi_mock):
+        """Testing minimal configuration."""
         config = {
             DOMAIN: xiaomi.PLATFORM_SCHEMA({
                 CONF_PLATFORM: xiaomi.DOMAIN,
@@ -153,7 +155,7 @@ class TestUnifiScanner(unittest.TestCase):
                 CONF_PASSWORD: 'passwordTest'
             })
         }
-        result = xiaomi.get_scanner(self.hass, config)
+        xiaomi.get_scanner(self.hass, config)
         self.assertEqual(xiaomi_mock.call_count, 1)
         self.assertEqual(xiaomi_mock.call_args, mock.call(config[DOMAIN]))
         call_arg = xiaomi_mock.call_args[0][0]
@@ -166,6 +168,7 @@ class TestUnifiScanner(unittest.TestCase):
         'homeassistant.components.device_tracker.xiaomi.XioamiDeviceScanner',
         return_value=mock.MagicMock())
     def test_config_full(self, xiaomi_mock):
+        """Testing full configuration."""
         config = {
             DOMAIN: xiaomi.PLATFORM_SCHEMA({
                 CONF_PLATFORM: xiaomi.DOMAIN,
@@ -174,7 +177,7 @@ class TestUnifiScanner(unittest.TestCase):
                 CONF_PASSWORD: 'passwordTest'
             })
         }
-        result = xiaomi.get_scanner(self.hass, config)
+        xiaomi.get_scanner(self.hass, config)
         self.assertEqual(xiaomi_mock.call_count, 1)
         self.assertEqual(xiaomi_mock.call_args, mock.call(config[DOMAIN]))
         call_arg = xiaomi_mock.call_args[0][0]
@@ -186,6 +189,7 @@ class TestUnifiScanner(unittest.TestCase):
     @patch('requests.get', side_effect=mocked_requests)
     @patch('requests.post', side_effect=mocked_requests)
     def test_invalid_credential(self, mock_get, mock_post):
+        """"Testing invalid credential handling."""
         config = {
             DOMAIN: xiaomi.PLATFORM_SCHEMA({
                 CONF_PLATFORM: xiaomi.DOMAIN,
@@ -199,6 +203,7 @@ class TestUnifiScanner(unittest.TestCase):
     @patch('requests.get', side_effect=mocked_requests)
     @patch('requests.post', side_effect=mocked_requests)
     def test_valid_credential(self, mock_get, mock_post):
+        """"Testing valid refresh."""
         config = {
             DOMAIN: xiaomi.PLATFORM_SCHEMA({
                 CONF_PLATFORM: xiaomi.DOMAIN,
@@ -209,7 +214,8 @@ class TestUnifiScanner(unittest.TestCase):
         }
         scanner = get_scanner(self.hass, config)
         self.assertIsNotNone(scanner)
-        self.assertTrue(scanner._update_info())
         self.assertEqual(2, len(scanner.scan_devices()))
-        self.assertEqual("Device1", scanner.get_device_name("23:83:BF:F6:38:A0"))
-        self.assertEqual("Device2", scanner.get_device_name("1D:98:EC:5E:D5:A6"))
+        self.assertEqual("Device1",
+                         scanner.get_device_name("23:83:BF:F6:38:A0"))
+        self.assertEqual("Device2",
+                         scanner.get_device_name("1D:98:EC:5E:D5:A6"))

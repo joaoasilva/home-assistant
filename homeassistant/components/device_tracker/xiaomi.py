@@ -66,7 +66,8 @@ class XioamiDeviceScanner(DeviceScanner):
         """Return the name of the given device or None if we don't know."""
         with self.lock:
             if self.mac2name is None:
-                url = "http://{}/cgi-bin/luci/;stok={}/api/misystem/devicelist".format(self.host, self.token)
+                url = "http://{}/cgi-bin/luci/;stok={}/api/misystem/devicelist"
+                url = url.format(self.host, self.token)
                 result = _get_device_list(url)
                 if result:
                     hosts = [x for x in result
@@ -90,7 +91,8 @@ class XioamiDeviceScanner(DeviceScanner):
 
         with self.lock:
             _LOGGER.info('Refreshing device list')
-            url = "http://{}/cgi-bin/luci/;stok={}/api/misystem/devicelist".format(self.host, self.token)
+            url = "http://{}/cgi-bin/luci/;stok={}/api/misystem/devicelist"
+            url = url.format(self.host, self.token)
             result = _get_device_list(url)
             if result:
                 self.last_results = []
@@ -125,7 +127,7 @@ def _get_token(host, username, password):
     return _extract_result(res, 'token')
 
 
-def _extract_result(res, keyName):
+def _extract_result(res, key_name):
     if res.status_code == 200:
         try:
             result = res.json()
@@ -134,9 +136,10 @@ def _extract_result(res, keyName):
             _LOGGER.exception('Failed to parse response from mi router')
             return
         try:
-            return result[keyName]
+            return result[key_name]
         except KeyError:
-            _LOGGER.exception('No %s in response from mi router. %s', keyName, result)
+            _LOGGER.exception('No %s in response from mi router. %s',
+                              key_name, result)
             return
     else:
         _LOGGER.error('Invalid response from mi router: %s', res)
